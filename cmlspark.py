@@ -1,21 +1,23 @@
 """@cmlccie Cisco Spark Python SDK."""
 
 from datetime import datetime
+import json
 
 import pytz
 import requests
 
-from jsondata import JSONDataObj
+from jsondata import JSONData, JSONProp
+from restapi import RESTfulAPI
 from roproperties import ROProperty
 
 
 # Module constants
-DEFAULT_API_URL = 'https://api.ciscospark.com/v1'
-PEOPLE_API = '/people'
-ROOMS_API = '/rooms'
-MEMBERSHIPS_API = '/memberships'
-MESSAGES_API = '/messages'
-WEBHOOKS_API = '/webhooks'
+DEFAULT_API_URL = 'https://api.ciscospark.com/v1/'
+PEOPLE_URL = 'people'
+ROOMS_URL = 'rooms'
+MEMBERSHIPS_URL = 'memberships'
+MESSAGES_URL = 'messages'
+WEBHOOKS_URL = 'webhooks'
 
 
 # Helper functions
@@ -25,10 +27,10 @@ def _spark_datetime(datetime_str):
 
 
 # Helper classes
-class RODateTime(ROProperty):
+class ROSparkDateTime(JSONProp):
     def __set__(self, instance, value):
         dt = _spark_datetime(value)
-        super(RODateTime, self).__set__(instance, dt)
+        super(ROSparkDateTime, self).__set__(instance, dt)
 
 
 # Module exceptions
@@ -42,51 +44,24 @@ class CiscoSparkException(CMLSparkException):
 
 
 # Cisco Spark API methods container class
-class CiscoSparkAPI(object):
-    content_type = 'application/json'
+class CiscoSparkAPI(RESTfulAPI):
+    authentication_token = ROProperty()
 
-    def __init__(self, authentication_token, url=DEFAULT_API_URL,
+    def __init__(self, authentication_token, api_url=DEFAULT_API_URL,
                  timeout=None):
-        self.at = authentication_token
-        self.url = url
-        self.people_url = url + PEOPLE_API
-        self.rooms_url = url + ROOMS_API
-        self.memberships_url = url + MEMBERSHIPS_API
-        self.messages_url = url + MESSAGES_API
-        self.webhooks_url = url + WEBHOOKS_API
-        self.timeout = timeout
-        self.headers = {"Authorization": "Bearer " + self.at,
-                        "Content-type": self.content_type}
+        super(CiscoSparkAPI, self).__init__(api_url)
+        self.authentication_token = authentication_token
+        self.request_args['timeout'] = timeout
+        self.request_args['headers'] = {
+            'Authorization': "Bearer " + self.authentication_token}
 
-    def get(self, url, params):
-        response = requests.get(url, params=params,
-                                headers=self.headers, timeout=self.timeout)
-        if response.status_code != 200:
-            response.raise_for_status()
-        else:
-            return response.text
-
-    def post(self, url, data):
-        response = requests.post(url, data=data,
-                                 headers=self.headers, timeout=self.timeout)
-        if response.status_code != 200:
-            response.raise_for_status()
-
-    def put(self, url, data):
-        response = requests.put(url, data=data,
-                                headers=self.headers, timeout=self.timeout)
-        if response.status_code != 200:
-            response.raise_for_status()
-
-    def delete(self, url):
-        response = requests.delete(url, headers=self.headers,
-                                   timeout=self.timeout)
+    def delete(self, url, **request_args):
+        response = super(CiscoSparkAPI, self).delete(url, **request_args)
         if response.status_code != 204:
             response.raise_for_status()
 
     def get_json(self, url, params=None):
-        response = requests.get(url, params=params,
-                                headers=self.headers, timeout=self.timeout)
+        response = self.get(url, params=params)
         if response.status_code != 200:
             response.raise_for_status()
         else:
@@ -94,10 +69,8 @@ class CiscoSparkAPI(object):
             return json_data
 
     def get_json_items(self, url, params=None):
-        initial_url = url
-        response = requests.get(initial_url, params=params,
-                                headers=self.headers, timeout=self.timeout)
-        while True:
+        responses = self.get_iter(url, params=params)
+        for response in responses:
             items = []
             if response.status_code != 200:
                 response.raise_for_status()
@@ -113,24 +86,16 @@ class CiscoSparkAPI(object):
                     yield item
             else:
                 raise StopIteration
-            if response.links.get('next'):
-                next_url = response.links.get('next').get('url')
-                response = requests.get(next_url, headers=self.headers,
-                                        timeout=self.timeout)
-            else:
-                raise StopIteration
 
     def post_json(self, url, json_data):
-        response = requests.post(url, json=json_data,
-                                 headers=self.headers, timeout=self.timeout)
+        response = self.post(url, json=json_data)
         if response.status_code != 200:
             response.raise_for_status()
         else:
             return response.json()
 
     def put_json(self, url, json_data):
-        response = requests.put(url, json=json_data,
-                                headers=self.headers, timeout=self.timeout)
+        response = self.put(url, json=json_data)
         if response.status_code != 200:
             response.raise_for_status()
         else:
@@ -146,44 +111,44 @@ class CiscoSparkAPI(object):
             raise CMLSparkException
         if max:
             params['max'] = max
-        people_items = self.get_json_items(self.people_url, params=params)
+        people_items = self.get_json_items(PEOPLE_URL, params=params)
         for item in people_items:
             yield Person(item)
 
     def get_person(self, id):
-        json_data = self.get_json(self.people_url + '/' + id)
+        json_data = self.get_json(PEOPLE_URL + '/' + id)
         return Person(json_data)
 
     def get_person_me(self):
-        json_data = self.get_json(self.people_url + '/me')
+        json_data = self.get_json(PEOPLE_URL + '/me')
         return Person(json_data)
 
     def get_rooms(self, showSipAddress=False, max=None):
         params = {'showSipAddress': showSipAddress}
         if max:
             params['max'] = max
-        room_items = self.get_json_items(self.rooms_url, params=params)
+        room_items = self.get_json_items(ROOMS_URL, params=params)
         for item in room_items:
             yield Room(item)
 
     def create_room(self, title):
         json_data = {'title': title}
-        room_item = self.post_json(self.rooms_url, json_data)
+        room_item = self.post_json(ROOMS_URL, json_data)
         return Room(room_item)
 
     def get_room(self, id, showSipAddress=False):
         params = {'showSipAddress': showSipAddress}
-        json_data = self.get_json(self.rooms_url+'/'+id, params)
+        json_data = self.get_json(ROOMS_URL+'/'+id, params)
         return Room(json_data)
 
     def update_room(self, id, **kwargs):
         assert kwargs and isinstance(kwargs, dict)
         json_data = kwargs
-        room_item = self.put_json(self.rooms_url+'/'+id, json_data)
+        room_item = self.put_json(ROOMS_URL+'/'+id, json_data)
         return Room(room_item)
 
     def delete_room(self, id):
-        self.delete(self.rooms_url+'/'+id)
+        self.delete(ROOMS_URL+'/'+id)
 
     def get_memberships(self, roomId, personId=None, personEmail=None,
                         max=None):
@@ -194,7 +159,7 @@ class CiscoSparkAPI(object):
             params['personEmail'] = personEmail
         if max:
             params['max'] = max
-        membership_items = self.get_json_items(self.memberships_url, params)
+        membership_items = self.get_json_items(MEMBERSHIPS_URL, params)
         for item in membership_items:
             yield Membership(item)
 
@@ -207,21 +172,21 @@ class CiscoSparkAPI(object):
             json_data['personEmail'] = personEmail
         else:
             raise CMLSparkException
-        membership_item = self.post_json(self.memberships_url, json_data)
+        membership_item = self.post_json(MEMBERSHIPS_URL, json_data)
         return Membership(membership_item)
 
     def get_membership(self, id):
-        json_data = self.get_json(self.memberships_url+'/'+id)
+        json_data = self.get_json(MEMBERSHIPS_URL+'/'+id)
         return Membership(json_data)
 
     def update_membership(self, id, **kwargs):
         assert kwargs and isinstance(kwargs, dict)
         json_data = kwargs
-        membership_item = self.put_json(self.memberships_url+'/'+id, json_data)
+        membership_item = self.put_json(MEMBERSHIPS_URL+'/'+id, json_data)
         return Membership(membership_item)
 
     def delete_membership(self, id):
-        self.delete(self.memberships_url+'/'+id)
+        self.delete(MEMBERSHIPS_URL+'/'+id)
 
     def get_messages(self, roomId, before=None, beforeMessage=None, max=None):
         params = {'roomId': roomId}
@@ -231,7 +196,7 @@ class CiscoSparkAPI(object):
             params['beforeMessage'] = beforeMessage
         if max:
             params['max'] = max
-        message_items = self.get_json_items(self.messages_url, params)
+        message_items = self.get_json_items(MESSAGES_URL, params)
         for item in message_items:
             return Message(item)
 
@@ -252,21 +217,21 @@ class CiscoSparkAPI(object):
             json_data['text'] = text
         if files:
             json_data['files'] = files
-        message_item = self.post_json(self.messages_url, json_data)
+        message_item = self.post_json(MESSAGES_URL, json_data)
         return Message(message_item)
 
     def get_message(self, id):
-        json_data = self.get_json(self.messages_url+'/'+id)
+        json_data = self.get_json(MESSAGES_URL+'/'+id)
         return Message(json_data)
 
     def delete_message(self, id):
-        self.delete(self.messages_url+'/'+id)
+        self.delete(MESSAGES_URL+'/'+id)
 
     def get_webhooks(self, max=None):
         params = {}
         if max:
             params['max'] = max
-        webhook_items = self.get_json_items(self.webhooks_url, params)
+        webhook_items = self.get_json_items(WEBHOOKS_URL, params)
         for item in webhook_items:
             yield Membership(item)
 
@@ -276,81 +241,77 @@ class CiscoSparkAPI(object):
                      'resource': resource,
                      'event': event,
                      'filter': filter}
-        webhook_item = self.post_json(self.webhooks_url, json_data)
+        webhook_item = self.post_json(WEBHOOKS_URL, json_data)
         return Webhook(webhook_item)
 
     def get_webhook(self, id):
-        webhook_item = self.get_json(self.webhooks_url+'/'+id)
+        webhook_item = self.get_json(WEBHOOKS_URL+'/'+id)
         return Webhook(webhook_item)
 
     def update_webhook(self, id, **kwargs):
         assert kwargs and isinstance(kwargs, dict)
         json_data = kwargs
-        webhook_item = self.put_json(self.webhooks_url+'/'+id, json_data)
+        webhook_item = self.put_json(WEBHOOKS_URL+'/'+id, json_data)
         return Webhook(webhook_item)
 
     def delete_webhook(self, id):
-        self.delete(self.webhooks_url+'/'+id)
+        self.delete(WEBHOOKS_URL+'/'+id)
 
 
 # Cisco Spark data objects
-class Room(JSONDataObj):
-    id = ROProperty()
-    title = ROProperty()
-    created = RODateTime()
-    lastActivity = RODateTime()
+class Room(JSONData):
+    id = JSONProp()
+    title = JSONProp()
+    created = ROSparkDateTime()
+    lastActivity = ROSparkDateTime()
 
-    def __init__(self, *args, **kwargs):
-        if args and not kwargs and isinstance(args[0], dict):
-            kwargs = args[0]
-        elif not kwargs:
-            raise TypeError
-        super(Room, self).__init__(**kwargs)
+    def __init__(self, json_data):
+        super(Room, self).__init__(json_data)
 
 
-class Person(JSONDataObj):
-    id = ROProperty()
-    emails = ROProperty()
-    displayName = ROProperty()
-    avatar = ROProperty()
-    created = RODateTime()
+class Person(JSONData):
+    id = JSONProp()
+    emails = JSONProp()
+    displayName = JSONProp()
+    avatar = JSONProp()
+    created = ROSparkDateTime()
 
-    def __init__(self, *args, **kwargs):
-        if args and not kwargs and isinstance(args[0], dict):
-            kwargs = args[0]
-        elif not kwargs:
-            raise TypeError
-        super(Person, self).__init__(**kwargs)
-
-
-class Membership(JSONDataObj):
-    id = ROProperty()
-
-    def __init__(self, *args, **kwargs):
-        if args and not kwargs and isinstance(args[0], dict):
-            kwargs = args[0]
-        elif not kwargs:
-            raise TypeError
-        super(Membership, self).__init__(**kwargs)
+    def __init__(self, json_data):
+        if isinstance(json_data, basestring):
+            json_data = json.dumps(json_data)
+        self.id = json_data[u'id']
+        self.emails = json_data[u'emails']
+        self.displayName = json_data[u'displayName']
+        self.avatar = json_data[u'avatar']
+        self.created = json_data[u'created']
+        super(Person, self).__init__(json_data)
 
 
-class Message(JSONDataObj):
-    id = ROProperty()
+class Membership(JSONData):
+    id = JSONProp()
 
-    def __init__(self, *args, **kwargs):
-        if args and not kwargs and isinstance(args[0], dict):
-            kwargs = args[0]
-        elif not kwargs:
-            raise TypeError
-        super(Message, self).__init__(**kwargs)
+    def __init__(self, json_data):
+        if isinstance(json_data, basestring):
+            json_data = json.dumps(json_data)
+        self.id = json_data[u'id']
+        super(Membership, self).__init__(json_data)
 
 
-class Webhook(JSONDataObj):
-    id = ROProperty()
+class Message(JSONData):
+    id = JSONProp()
 
-    def __init__(self, *args, **kwargs):
-        if args and not kwargs and isinstance(args[0], dict):
-            kwargs = args[0]
-        elif not kwargs:
-            raise TypeError
-        super(Webhook, self).__init__(**kwargs)
+    def __init__(self, json_data):
+        if isinstance(json_data, basestring):
+            json_data = json.dumps(json_data)
+        self.id = json_data[u'id']
+        super(Message, self).__init__(json_data)
+
+
+class Webhook(JSONData):
+    id = JSONProp()
+
+    def __init__(self, json_data):
+        if isinstance(json_data, basestring):
+            json_data = json.dumps(json_data)
+        self.id = json_data[u'id']
+        super(Webhook, self).__init__(json_data)
