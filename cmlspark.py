@@ -1,14 +1,11 @@
 """@cmlccie Cisco Spark Python SDK."""
 
 from datetime import datetime
-import json
 
 import pytz
-import requests
 
-from jsondata import JSONData, JSONProp
+from jsondata import JSONData, READ_ONLY, READ_WRITE
 from restapi import RESTfulAPI
-from roproperties import ROProperty
 
 
 # Module constants
@@ -21,16 +18,28 @@ WEBHOOKS_URL = 'webhooks'
 
 
 # Helper functions
-def _spark_datetime(datetime_str):
+def spark_datetime(datetime_str):
     return datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M:%S.%fZ')\
                     .replace(tzinfo=pytz.utc)
 
 
 # Helper classes
-class ROSparkDateTime(JSONProp):
+class SparkDateTime(object):
+    def __init__(self, name, internal_attr_name=None):
+        self.name = name
+        if internal_attr_name:
+            self.internal_attr_name = internal_attr_name
+        else:
+            self.internal_attr_name = '_' + name
+
+    def __get__(self, instance, _):
+        if instance is None:
+            return self
+        return getattr(instance, self.internal_attr_name)
+
     def __set__(self, instance, value):
-        dt = _spark_datetime(value)
-        super(ROSparkDateTime, self).__set__(instance, dt)
+        value = spark_datetime(value)
+        setattr(instance, self.internal_attr_name, value)
 
 
 # Module exceptions
@@ -45,8 +54,6 @@ class CiscoSparkException(CMLSparkException):
 
 # Cisco Spark API methods container class
 class CiscoSparkAPI(RESTfulAPI):
-    authentication_token = ROProperty()
-
     def __init__(self, authentication_token, api_url=DEFAULT_API_URL,
                  timeout=None):
         super(CiscoSparkAPI, self).__init__(api_url)
@@ -198,7 +205,7 @@ class CiscoSparkAPI(RESTfulAPI):
             params['max'] = max
         message_items = self.get_json_items(MESSAGES_URL, params)
         for item in message_items:
-            return Message(item)
+            yield Message(item)
 
     def create_message(self, roomId=None, text=None, files=None,
                        toPersonId=None, toPersonEmail=None):
@@ -260,58 +267,70 @@ class CiscoSparkAPI(RESTfulAPI):
 
 # Cisco Spark data objects
 class Room(JSONData):
-    id = JSONProp()
-    title = JSONProp()
-    created = ROSparkDateTime()
-    lastActivity = ROSparkDateTime()
+    id = None
+    title = None
+    created = SparkDateTime("created")
+    lastActivity = SparkDateTime("lastActivity")
+    isLocked = None
 
-    def __init__(self, json_data):
-        super(Room, self).__init__(json_data)
+    def __init__(self, json_data, init_values=True, default_access=READ_ONLY):
+        super(Room, self).__init__(json_data,
+                                   init_values=init_values,
+                                   default_access=default_access)
 
 
 class Person(JSONData):
-    id = JSONProp()
-    emails = JSONProp()
-    displayName = JSONProp()
-    avatar = JSONProp()
-    created = ROSparkDateTime()
+    id = None
+    emails = None
+    displayName = None
+    avatar = None
+    created = SparkDateTime("created")
 
-    def __init__(self, json_data):
-        if isinstance(json_data, basestring):
-            json_data = json.dumps(json_data)
-        self.id = json_data[u'id']
-        self.emails = json_data[u'emails']
-        self.displayName = json_data[u'displayName']
-        self.avatar = json_data[u'avatar']
-        self.created = json_data[u'created']
-        super(Person, self).__init__(json_data)
+    def __init__(self, json_data, init_values=True, default_access=READ_ONLY):
+        super(Person, self).__init__(json_data,
+                                     init_values=init_values,
+                                     default_access=default_access)
 
 
 class Membership(JSONData):
-    id = JSONProp()
+    id = None
+    personId = None
+    personEmail = None
+    personDisplayName = None
+    roomId = None
+    isModerator = None
+    isMonitor = None
+    created = SparkDateTime("created")
 
-    def __init__(self, json_data):
-        if isinstance(json_data, basestring):
-            json_data = json.dumps(json_data)
-        self.id = json_data[u'id']
-        super(Membership, self).__init__(json_data)
+    def __init__(self, json_data, init_values=True, default_access=READ_ONLY):
+        super(Membership, self).__init__(json_data,
+                                         init_values=init_values,
+                                         default_access=default_access)
 
 
 class Message(JSONData):
-    id = JSONProp()
+    id = None
+    roomId = None
+    text = None
+    personId = None
+    personEmail = None
+    created = SparkDateTime("created")
 
-    def __init__(self, json_data):
-        if isinstance(json_data, basestring):
-            json_data = json.dumps(json_data)
-        self.id = json_data[u'id']
-        super(Message, self).__init__(json_data)
+    def __init__(self, json_data, init_values=True, default_access=READ_ONLY):
+        super(Message, self).__init__(json_data,
+                                      init_values=init_values,
+                                      default_access=default_access)
 
 
 class Webhook(JSONData):
-    id = JSONProp()
+    id = None
+    name = None
+    resource = None
+    event = None
+    filter = None
+    data = None
 
-    def __init__(self, json_data):
-        if isinstance(json_data, basestring):
-            json_data = json.dumps(json_data)
-        self.id = json_data[u'id']
-        super(Webhook, self).__init__(json_data)
+    def __init__(self, json_data, init_values=True, default_access=READ_ONLY):
+        super(Webhook, self).__init__(json_data,
+                                      init_values=init_values,
+                                      default_access=default_access)
