@@ -120,15 +120,15 @@ class CiscoSparkAPI(RESTfulAPI):
             params['max'] = max
         people_items = self.get_json_items(PEOPLE_URL, params=params)
         for item in people_items:
-            yield Person(item)
+            yield Person(item, api=self)
 
     def get_person(self, id):
         json_data = self.get_json(PEOPLE_URL + '/' + id)
-        return Person(json_data)
+        return Person(json_data, api=self)
 
     def get_person_me(self):
         json_data = self.get_json(PEOPLE_URL + '/me')
-        return Person(json_data)
+        return Person(json_data, api=self)
 
     def get_rooms(self, showSipAddress=False, max=None):
         params = {'showSipAddress': showSipAddress}
@@ -136,23 +136,23 @@ class CiscoSparkAPI(RESTfulAPI):
             params['max'] = max
         room_items = self.get_json_items(ROOMS_URL, params=params)
         for item in room_items:
-            yield Room(item)
+            yield Room(item, api=self)
 
     def create_room(self, title):
         json_data = {'title': title}
         room_item = self.post_json(ROOMS_URL, json_data)
-        return Room(room_item)
+        return Room(room_item, api=self)
 
     def get_room(self, id, showSipAddress=False):
         params = {'showSipAddress': showSipAddress}
         json_data = self.get_json(ROOMS_URL+'/'+id, params)
-        return Room(json_data)
+        return Room(json_data, api=self)
 
     def update_room(self, id, **kwargs):
         assert kwargs and isinstance(kwargs, dict)
         json_data = kwargs
         room_item = self.put_json(ROOMS_URL+'/'+id, json_data)
-        return Room(room_item)
+        return Room(room_item, api=self)
 
     def delete_room(self, id):
         self.delete(ROOMS_URL+'/'+id)
@@ -168,7 +168,7 @@ class CiscoSparkAPI(RESTfulAPI):
             params['max'] = max
         membership_items = self.get_json_items(MEMBERSHIPS_URL, params)
         for item in membership_items:
-            yield Membership(item)
+            yield Membership(item, api=self)
 
     def create_membership(self, roomId, personId=None, personEmail=None,
                           isModerator=False):
@@ -180,17 +180,17 @@ class CiscoSparkAPI(RESTfulAPI):
         else:
             raise CMLSparkException
         membership_item = self.post_json(MEMBERSHIPS_URL, json_data)
-        return Membership(membership_item)
+        return Membership(membership_item, api=self)
 
     def get_membership(self, id):
         json_data = self.get_json(MEMBERSHIPS_URL+'/'+id)
-        return Membership(json_data)
+        return Membership(json_data, api=self)
 
     def update_membership(self, id, **kwargs):
         assert kwargs and isinstance(kwargs, dict)
         json_data = kwargs
         membership_item = self.put_json(MEMBERSHIPS_URL+'/'+id, json_data)
-        return Membership(membership_item)
+        return Membership(membership_item, api=self)
 
     def delete_membership(self, id):
         self.delete(MEMBERSHIPS_URL+'/'+id)
@@ -205,7 +205,7 @@ class CiscoSparkAPI(RESTfulAPI):
             params['max'] = max
         message_items = self.get_json_items(MESSAGES_URL, params)
         for item in message_items:
-            yield Message(item)
+            yield Message(item, api=self)
 
     def create_message(self, roomId=None, text=None, files=None,
                        toPersonId=None, toPersonEmail=None):
@@ -225,11 +225,11 @@ class CiscoSparkAPI(RESTfulAPI):
         if files:
             json_data['files'] = files
         message_item = self.post_json(MESSAGES_URL, json_data)
-        return Message(message_item)
+        return Message(message_item, api=self)
 
     def get_message(self, id):
         json_data = self.get_json(MESSAGES_URL+'/'+id)
-        return Message(json_data)
+        return Message(json_data, api=self)
 
     def delete_message(self, id):
         self.delete(MESSAGES_URL+'/'+id)
@@ -240,7 +240,7 @@ class CiscoSparkAPI(RESTfulAPI):
             params['max'] = max
         webhook_items = self.get_json_items(WEBHOOKS_URL, params)
         for item in webhook_items:
-            yield Membership(item)
+            yield Membership(item, api=self)
 
     def create_webhook(self, name, targetUrl, resource, event, filter):
         json_data = {'name': name,
@@ -249,17 +249,17 @@ class CiscoSparkAPI(RESTfulAPI):
                      'event': event,
                      'filter': filter}
         webhook_item = self.post_json(WEBHOOKS_URL, json_data)
-        return Webhook(webhook_item)
+        return Webhook(webhook_item, api=self)
 
     def get_webhook(self, id):
         webhook_item = self.get_json(WEBHOOKS_URL+'/'+id)
-        return Webhook(webhook_item)
+        return Webhook(webhook_item, api=self)
 
     def update_webhook(self, id, **kwargs):
         assert kwargs and isinstance(kwargs, dict)
         json_data = kwargs
         webhook_item = self.put_json(WEBHOOKS_URL+'/'+id, json_data)
-        return Webhook(webhook_item)
+        return Webhook(webhook_item, api=self)
 
     def delete_webhook(self, id):
         self.delete(WEBHOOKS_URL+'/'+id)
