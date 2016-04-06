@@ -29,7 +29,7 @@ class JSONData(object):
     def __init__(self, json_data, **kwargs):
         # Process kwargs
         init_values = kwargs.pop('init_values', True)
-        default_access = kwargs.pop('_default_access', READ_WRITE)
+        default_access = kwargs.pop('default_access', READ_WRITE)
         if kwargs:
             raise TypeError("Unexpected kwargs: %r" % kwargs)
         # Initialize class attributes
