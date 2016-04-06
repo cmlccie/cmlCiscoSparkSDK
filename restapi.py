@@ -19,9 +19,9 @@ def merge_args(args1, args2):
 
 
 class RESTfulAPI(object):
-    def __init__(self, api_url, **kwargs):
+    def __init__(self, api_url, **request_args):
         self.api_url = api_url
-        self.request_args = kwargs
+        self.request_args = request_args
 
     def absolute_url(self, url):
         parsed_url = urlparse(url)
