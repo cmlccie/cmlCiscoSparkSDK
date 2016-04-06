@@ -266,33 +266,33 @@ class CiscoSparkAPI(RESTfulAPI):
 
 
 # Cisco Spark data objects
-class Room(JSONData):
+class SparkDataObject(JSONData):
+    def __init__(self, json_data, **kwargs):
+        # Process kwargs for SparkDataObjects
+        self._api = kwargs.pop('api', None)
+        # Process JSONData kwargs setting defaults for SparkDataObjects
+        kwargs['init_values'] = kwargs.get('init_values', True)
+        kwargs['default_access'] = kwargs.get('default_access', READ_ONLY)
+        super(SparkDataObject, self).__init__(json_data, **kwargs)
+
+
+class Room(SparkDataObject):
     id = None
     title = None
     created = SparkDateTime("created")
     lastActivity = SparkDateTime("lastActivity")
     isLocked = None
 
-    def __init__(self, json_data, init_values=True, default_access=READ_ONLY):
-        super(Room, self).__init__(json_data,
-                                   init_values=init_values,
-                                   default_access=default_access)
 
-
-class Person(JSONData):
+class Person(SparkDataObject):
     id = None
     emails = None
     displayName = None
     avatar = None
     created = SparkDateTime("created")
 
-    def __init__(self, json_data, init_values=True, default_access=READ_ONLY):
-        super(Person, self).__init__(json_data,
-                                     init_values=init_values,
-                                     default_access=default_access)
 
-
-class Membership(JSONData):
+class Membership(SparkDataObject):
     id = None
     personId = None
     personEmail = None
@@ -302,13 +302,8 @@ class Membership(JSONData):
     isMonitor = None
     created = SparkDateTime("created")
 
-    def __init__(self, json_data, init_values=True, default_access=READ_ONLY):
-        super(Membership, self).__init__(json_data,
-                                         init_values=init_values,
-                                         default_access=default_access)
 
-
-class Message(JSONData):
+class Message(SparkDataObject):
     id = None
     roomId = None
     text = None
@@ -316,21 +311,11 @@ class Message(JSONData):
     personEmail = None
     created = SparkDateTime("created")
 
-    def __init__(self, json_data, init_values=True, default_access=READ_ONLY):
-        super(Message, self).__init__(json_data,
-                                      init_values=init_values,
-                                      default_access=default_access)
 
-
-class Webhook(JSONData):
+class Webhook(SparkDataObject):
     id = None
     name = None
     resource = None
     event = None
     filter = None
     data = None
-
-    def __init__(self, json_data, init_values=True, default_access=READ_ONLY):
-        super(Webhook, self).__init__(json_data,
-                                      init_values=init_values,
-                                      default_access=default_access)
