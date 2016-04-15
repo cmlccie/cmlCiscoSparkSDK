@@ -215,13 +215,15 @@ class CiscoSparkAPI(RESTfulAPI):
         return self._format_return(json_dict, return_type)
 
     def get_room(self, id, showSipAddress=False, return_type=Room):
-        params = {'showSipAddress': showSipAddress}
+        params = {}
+        if showSipAddress:
+            params['showSipAddress'] = showSipAddress
         json_dict = self.get_json(ROOMS_URL+'/'+id, params)
         return self._format_return(json_dict, return_type)
 
-    def update_room(self, id, return_type=Room, **kwargs):
-        assert kwargs
-        json_payload_dict = kwargs
+    def update_room(self, id, return_type=Room, **attributes):
+        assert attributes
+        json_payload_dict = attributes
         json_dict = self.put_json(ROOMS_URL+'/'+id, json_payload_dict)
         return self._format_return(json_dict, return_type)
 
@@ -257,9 +259,9 @@ class CiscoSparkAPI(RESTfulAPI):
         json_dict = self.get_json(MEMBERSHIPS_URL+'/'+id)
         return self._format_return(json_dict, return_type)
 
-    def update_membership(self, id, return_type=Membership, **kwargs):
-        assert kwargs
-        json_payload_dict = kwargs
+    def update_membership(self, id, return_type=Membership, **attributes):
+        assert attributes
+        json_payload_dict = attributes
         json_dict = self.put_json(MEMBERSHIPS_URL+'/'+id, json_payload_dict)
         return self._format_return(json_dict, return_type)
 
@@ -329,9 +331,9 @@ class CiscoSparkAPI(RESTfulAPI):
         json_dict = self.get_json(WEBHOOKS_URL+'/'+id)
         return self._format_return(json_dict, return_type)
 
-    def update_webhook(self, id, return_type=Webhook, **kwargs):
-        assert kwargs
-        json_payload_dict = kwargs
+    def update_webhook(self, id, return_type=Webhook, **attributes):
+        assert attributes
+        json_payload_dict = attributes
         json_dict = self.put_json(WEBHOOKS_URL+'/'+id, json_payload_dict)
         return self._format_return(json_dict, return_type)
 
