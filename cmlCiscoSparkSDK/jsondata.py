@@ -45,17 +45,20 @@ class JSONData(object):
 
     def _init_values(self, json_data):
         # Initialize object with initial values from json_data
-        json_dict = json_data_to_dict(json_data)
-        self._refresh_data(json_dict)
+        self._refresh_data(json_data)
 
     def _refresh_data(self, json_data):
         json_dict = json_data_to_dict(json_data)
         for attr_name, attr_value in json_dict.items():
+            if attr_name not in self._json_attributes:
+                self._json_attributes.append(attr_name)
+            self._access_control[attr_name] = \
+                self._access_control.get(attr_name, self._default_access)
             if isinstance(attr_value, dict):
                 # Nested JSON object
                 attr_value = JSONData(attr_value, init_values=True,
                                       default_access=self._default_access)
-            # Using super.__setattr__ to avoid recursion and access_control
+            # Using super.__setattr__ to avoid access control
             super(JSONData, self).__setattr__(attr_name, attr_value)
 
     def __setattr__(self, key, value):
