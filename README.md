@@ -34,6 +34,7 @@ for room in rooms:               # Efficiently iterates through returned objects
 Versions
 --------
  * 1.0 - API connection encapsultation, data object modeling and paging support via iterators.
+ * 1.1 - Support for Spark Teams API
 
 
 ToDo
