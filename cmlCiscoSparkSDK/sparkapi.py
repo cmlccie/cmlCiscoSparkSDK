@@ -14,6 +14,8 @@ PEOPLE_URL = 'people'
 ROOMS_URL = 'rooms'
 MEMBERSHIPS_URL = 'memberships'
 MESSAGES_URL = 'messages'
+TEAMS_URL = 'teams'
+TEAM_MEMBERSHIPS_URL = 'team/memberships'
 WEBHOOKS_URL = 'webhooks'
 GET_EXPECTED_STATUS_CODE = 200
 POST_EXPECTED_STATUS_CODE = 200
@@ -103,6 +105,21 @@ class Message(SparkDataObject):
     created = SparkDateTime("created")
 
 
+class Team(SparkDataObject):
+    id = None
+    name = None
+    created = SparkDateTime("created")
+
+
+class TeamMembership(SparkDataObject):
+    id = None
+    teamId = None
+    personEmail = None
+    personDisplayName = None
+    isModerator = None
+    created = SparkDateTime("created")
+
+
 class Webhook(SparkDataObject):
     id = None
     name = None
@@ -120,7 +137,7 @@ class CiscoSparkAPI(RESTfulAPI):
         self.authentication_token = authentication_token
         self.request_args['timeout'] = timeout
         self.request_args['headers'] = {
-            'Authorization': "Bearer " + self.authentication_token}
+            'Authorization': 'Bearer ' + self.authentication_token}
 
     def delete(self, url, **request_args):
         response = super(CiscoSparkAPI, self).delete(url, **request_args)
@@ -308,6 +325,67 @@ class CiscoSparkAPI(RESTfulAPI):
 
     def delete_message(self, id):
         self.delete(MESSAGES_URL+'/'+id)
+
+    def get_teams(self, max=None, return_type=Team):
+        params = {}
+        if max:
+            params['max'] = max
+        team_items = self.get_json_items(TEAMS_URL, params=params)
+        for item in team_items:
+            yield self._format_return(item, return_type)
+
+    def create_team(self, name, return_type=Team):
+        json_payload_dict = {'name': name}
+        json_dict = self.post_json(TEAMS_URL, json_payload_dict)
+        return self._format_return(json_dict, return_type)
+
+    def get_team(self, id, return_type=Team):
+        json_dict = self.get_json(TEAMS_URL+'/'+id)
+        return self._format_return(json_dict, return_type)
+
+    def update_team(self, id, return_type=Team, **attributes):
+        assert attributes
+        json_payload_dict = attributes
+        json_dict = self.put_json(TEAMS_URL+'/'+id, json_payload_dict)
+        return self._format_return(json_dict, return_type)
+
+    def delete_team(self, id):
+        self.delete(TEAMS_URL+'/'+id)
+
+    def get_team_memberships(self, teamId, max=None,
+                             return_type=TeamMembership):
+        params = {'teamId': teamId}
+        if max:
+            params['max'] = max
+        membership_items = self.get_json_items(TEAM_MEMBERSHIPS_URL, params)
+        for item in membership_items:
+            yield self._format_return(item, return_type)
+
+    def create_team_membership(self, teamId, personId=None, personEmail=None,
+                               isModerator=False, return_type=TeamMembership):
+        json_payload_dict = {'teamId': teamId, 'isModerator': isModerator}
+        if personId:
+            json_payload_dict['personId'] = personId
+        elif personEmail:
+            json_payload_dict['personEmail'] = personEmail
+        else:
+            raise CMLSparkException
+        json_dict = self.post_json(TEAM_MEMBERSHIPS_URL, json_payload_dict)
+        return self._format_return(json_dict, return_type)
+
+    def get_team_membership(self, id, return_type=TeamMembership):
+        json_dict = self.get_json(TEAM_MEMBERSHIPS_URL + '/' + id)
+        return self._format_return(json_dict, return_type)
+
+    def update_team_membership(self, id, return_type=TeamMembership,
+                               **attributes):
+        assert attributes
+        json_payload_dict = attributes
+        json_dict = self.put_json(TeamMembership+'/'+id, json_payload_dict)
+        return self._format_return(json_dict, return_type)
+
+    def delete_team_membership(self, id):
+        self.delete(TEAM_MEMBERSHIPS_URL + '/' + id)
 
     def get_webhooks(self, max=None, return_type=Webhook):
         params = {}
