@@ -57,7 +57,7 @@ class RESTfulAPI(object):
     def post(self, url, **request_args):
         url = self.absolute_url(url)
         request_args = merge_args(self.request_args, request_args)
-        response = requests.post(url, request_args)
+        response = requests.post(url, **request_args)
         return response
 
     def put(self, url, **request_args):
