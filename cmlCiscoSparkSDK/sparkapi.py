@@ -1,11 +1,12 @@
 """@cmlccie Cisco Spark Python SDK."""
+from __future__ import absolute_import
 
 from datetime import datetime
 
 import pytz
 
-from jsondata import JSONData, READ_ONLY, READ_WRITE
-from restapi import RESTfulAPI
+from .jsondata import JSONData, READ_ONLY, READ_WRITE
+from .restapi import RESTfulAPI
 
 
 # Module constants
