@@ -1,15 +1,18 @@
 """Generic RESTful API interface class."""
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 
 
 import requests
-from urlparse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin
 
 
 # Helper functions
 def merge_args(args1, args2):
     assert isinstance(args1, dict) and isinstance(args2, dict)
     result = args1.copy()
-    for arg, value2 in args2.items():
+    for arg, value2 in list(args2.items()):
         value1 = result.get(arg, None)
         if isinstance(value1, dict):
             assert isinstance(value2, dict)
