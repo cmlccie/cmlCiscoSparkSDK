@@ -399,13 +399,15 @@ class CiscoSparkAPI(RESTfulAPI):
         for item in webhook_items:
             yield self._format_return(item, return_type)
 
-    def create_webhook(self, name, targetUrl, resource, event, filter,
+    def create_webhook(self, name, targetUrl, resource, event, filter, secret=None,
                        return_type=Webhook):
         json_payload_dict = {'name': name,
                              'targetUrl': targetUrl,
                              'resource': resource,
                              'event': event,
                              'filter': filter}
+        if secret:
+            json_payload_dict['secret'] = secret
         json_dict = self.post_json(WEBHOOKS_URL, json_payload_dict)
         return self._format_return(json_dict, return_type)
 
