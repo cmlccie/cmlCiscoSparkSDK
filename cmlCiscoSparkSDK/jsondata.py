@@ -1,4 +1,6 @@
 """Represent JSON objects as native Python data objects."""
+from past.builtins import basestring
+from builtins import object
 
 
 import json
@@ -34,7 +36,7 @@ class JSONData(object):
             raise TypeError("Unexpected kwargs: %r" % kwargs)
         # Initialize class attributes
         json_dict = json_data_to_dict(json_data)
-        self._json_attributes = json_dict.keys()
+        self._json_attributes = list(json_dict.keys())
         self._default_access = default_access
         self._access_control = {}
         for attr in self._json_attributes:
@@ -49,7 +51,7 @@ class JSONData(object):
 
     def _refresh_data(self, json_data):
         json_dict = json_data_to_dict(json_data)
-        for attr_name, attr_value in json_dict.items():
+        for attr_name, attr_value in list(json_dict.items()):
             if attr_name not in self._json_attributes:
                 self._json_attributes.append(attr_name)
             self._access_control[attr_name] = \

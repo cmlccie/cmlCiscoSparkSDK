@@ -22,7 +22,7 @@ setup(name='cmlCiscoSparkSDK',
       license='MIT',
       version=versioneer.get_version(),
       cmdclass=versioneer.get_cmdclass(),
-      install_requires=['requests', 'pytz'],
+      install_requires=['requests', 'pytz','future'],
       packages=['cmlCiscoSparkSDK'],
       classifiers=['Development Status :: 3 - Alpha'],
      )
