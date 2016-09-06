@@ -301,7 +301,7 @@ class CiscoSparkAPI(RESTfulAPI):
             yield self._format_return(item, return_type)
 
     def create_message(self, roomId=None, text=None, files=None,
-                       toPersonId=None, toPersonEmail=None,
+                       toPersonId=None, toPersonEmail=None, markdown=None,
                        return_type=Message):
         json_payload_dict = {}
         if roomId:
@@ -318,6 +318,8 @@ class CiscoSparkAPI(RESTfulAPI):
             json_payload_dict['text'] = text
         if files:
             json_payload_dict['files'] = files
+        if markdown:
+            json_payload_dict['markdown'] = markdown
         json_dict = self.post_json(MESSAGES_URL, json_payload_dict)
         return self._format_return(json_dict, return_type)
 
