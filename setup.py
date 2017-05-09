@@ -14,7 +14,7 @@ def read(fname):
 
 setup(name='cmlCiscoSparkSDK',
       description='Pythonic Cisco Spark SDK',
-      long_description=read('README.md'),
+      long_description=read('README.old'),
       keywords='cisco spark api sdk',
       url='https://github.com/cmlccie/cmlCiscoSparkSDK',
       author='Chris Lunsford',

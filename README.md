@@ -1,45 +1,15 @@
-cmlCiscoSparkSDK
-==================
+# cmlCiscoSparkSDK
 
-Overview
---------
-Pythonic classes for representing Cisco Spark API interfaces and JSON objects as native Python objects and method calls.
+**cmlCiscoSparkSDK has been deprecated; please use ciscosparkapi.**
 
- * Leverages iterators and RFC5988 web linking to provide efficient 'paging' of response data.
+I'm very happy and pleased with the benefit that this package provided many of you seeking a Python Spark API wrapper!  I took the things I learned creating this package, and the lessons learned from others wiser than myself, and authored the [CiscoDevNet\ciscosparkapi](https://github.com/CiscoDevNet/ciscosparkapi) project.
 
- * All Cisco Spark JSON objects and attributes are represented as native python objects.
-   * As new Cisco Spark attributes are added and returned by the Spark cloud service, they will be automatically available in the respective Python objects - no library update required.
-   * New object types can be quickly created and modeled by subclassing the provided SparkDataObject or JSONData base classes.
-   * API methods can easily be set to return your custom sub-classed objects (return_type=YourClass).
+I have for sometime devoted my energies towards this effort to the new project, and it is now much more functional and API-complete when compared to this first effort.
 
- * Create API connection objects that encapsulate all neccessary API elements (URLs, authentication, headers, and RESTful request parameters) into a simple 'connection object.'
-   * API defaults are provided to make getting connected simple, and can be easily overridden if needed.
-   * The only setting required to get connected is your Cisco Spark Authentication Token (see [developer.ciscospark.com](https://developer.ciscospark.com/getting-started.html)).
-   * All API calls are provided as simple method calls on the API connection objects.
+Going forward, please use the [CiscoDevNet\ciscosparkapi](https://github.com/CiscoDevNet/ciscosparkapi) package.
 
-### Examples
+I will not be making any further updates to this one.
 
-```python
-from cmlCiscoSparkSDK import CiscoSparkAPI
+_Thank you!_
 
-authentication_token = "abcdefg..."
-api = CiscoSparkAPI(authentication_token)
-
-rooms = api.get_rooms(max=10)    # Returns an iterator providing support for RFC5988 paging
-
-for room in rooms:               # Efficiently iterates through returned objects
-    print room.title             # JSON objects are represented as native Python objects
-```
-
-Versions
---------
- * 1.0 - API connection encapsultation, data object modeling and paging support via iterators.
- * 1.1 - Support for Spark Teams API
-
-
-ToDo
-----
- * Extend the provided SparkDataObjects (Room, Person, etc.) to incorporate relevant API method calls.
- * Provide a 'client' convenience class to expose API calls as simple properties and iterators.
- * Documentation (module, class, and function docstrings and examples).
- * Complete package and module custom exception classes.
+Chris
